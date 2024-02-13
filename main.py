@@ -12,6 +12,12 @@ load_dotenv()
 # Initialize flask
 app = Flask(__name__)
 
+client = patch(OpenAI())
+
+assistant = client.beta.assistants.retrieve(os.getenv('ASSISTANCE'))
+
+thread = client.beta.threads.create()
+
 # Error handling, this will be invoked when the user tries to invoke a non existing route
 @app.errorhandler(HTTPException)
 def handle_exception(e):
@@ -50,12 +56,6 @@ def send_chatbot():
         else:
             # print(request_data['message'])
             # Credit to Omar
-            client = patch(OpenAI())
-
-            assistant = client.beta.assistants.retrieve(os.getenv('ASSISTANCE'))
-
-            thread = client.beta.threads.create()
-
             message = client.beta.threads.messages.create(
                 thread_id = thread.id,
                 role="user",
@@ -68,33 +68,36 @@ def send_chatbot():
                 instructions="You are a helpful assistant."
             )
 
-            run_status = client.beta.threads.runs.retrieve(
+            # while true is required for the api to keep runing while the api server is processing the message
+            while True:
+                run_status = client.beta.threads.runs.retrieve(
                         thread_id=thread.id,
                         run_id=run.id
-            )
-
+                    )
+                print(run_status.status)
+                if run_status.status == 'completed':
+                    messages = client.beta.threads.messages.list(
+                        thread_id=thread.id
+                    )
+                    # print(messages)
+                    # Response from api server
+                    assistant_response = messages.data[0].content[0].text.value
+                    if assistant_response == "":
+                        response_message = "No message received"
+                    else:
+                        response_message = assistant_response
+                    # return the relevant response code and message
+                    return {
+                        "message": response_message
+                    }, 204 if assistant_response == "" else None
             #Return "No message received, please try again" if there is not completed
-            if run_status.status != 'completed':
-                return {
-                    "message": "Something went wrong, please try again"
-                }, 503
+                if run_status.status == 'failed':
+                    print(run_status)
+                    return {
+                        "message": "Something went wrong, please try again"
+                    }, 503
+            
 
-            else:
-                messages = client.beta.threads.messages.list(
-                    thread_id=thread.id
-                )
-                # print(messages)
-                # Response from api server
-                assistant_response = messages.data[0].content[0].text.value
-                if assistant_response == "":
-                    response_message = "No message received"
-                else:
-                    response_message = assistant_response
-                # return the relevant response code and message
-                return {
-                    "message": response_message
-                }, 204 if assistant_response == "" else None
-        
     except Exception as e:
         # If authentication error, return 401
         print(e)
