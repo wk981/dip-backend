@@ -1,6 +1,7 @@
-import os
-import json
-from flask import Flask, request, abort
+import os, json, time
+import openai
+
+from flask import Flask, request
 from werkzeug.exceptions import HTTPException
 
 # Import necessaries libs, taken from Omar repo
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 # Initialize flask
 app = Flask(__name__)
+app.debug = True # UNCOMMENT FOR DEVELOPMENT, TODO: MOVE TO ENV VARIABLE
 
 client = patch(OpenAI())
 
@@ -48,16 +50,14 @@ def send_chatbot():
         # get value from request body. Only accept message
         request_data = request.get_json()
         # return bad request
-        if('message' not in request_data):
+        if 'message' not in request_data:
             return {
-                    "message": "Bad Request"
+                "message": "Bad Request"
             }, 400
-        
         else:
-            # print(request_data['message'])
             # Credit to Omar
             message = client.beta.threads.messages.create(
-                thread_id = thread.id,
+                thread_id=thread.id,
                 role="user",
                 content=request_data["message"]
             )
@@ -68,19 +68,16 @@ def send_chatbot():
                 instructions="You are a helpful assistant."
             )
 
-            # while true is required for the api to keep runing while the api server is processing the message
             while True:
                 run_status = client.beta.threads.runs.retrieve(
-                        thread_id=thread.id,
-                        run_id=run.id
-                    )
+                    thread_id=thread.id,
+                    run_id=run.id
+                )
                 print(run_status.status)
                 if run_status.status == 'completed':
                     messages = client.beta.threads.messages.list(
                         thread_id=thread.id
                     )
-                    # print(messages)
-                    # Response from api server
                     assistant_response = messages.data[0].content[0].text.value
                     if assistant_response == "":
                         response_message = "No message received"
@@ -90,27 +87,26 @@ def send_chatbot():
                     return {
                         "message": response_message
                     }, 204 if assistant_response == "" else None
-            #Return "No message received, please try again" if there is not completed
-                if run_status.status == 'failed':
+                elif run_status.status == 'failed':
                     print(run_status)
                     return {
                         "message": "Something went wrong, please try again"
                     }, 503
-            
+                else:
+                    # Sleep to avoid busy waiting and overloading the server
+                    time.sleep(1)
 
+    except openai.AuthenticationError:
+        return {
+            "error": {
+                "message": "Incorrect API key provided"
+            }
+        }, 401
     except Exception as e:
-        # If authentication error, return 401
+        # Log any other exceptions
         print(e)
-        if(type(e).__name__ is "AuthenticationError"):
-            return {
-                "error":{
-                    "message": "Incorrect API key provided"
-                }
-            },401
-        # Otherwise return 500
-        else:
-            return {
-                "error":{
-                    "message": "Internal Server Error"
-                }
-            }, 500
+        return {
+            "error": {
+                "message": "Internal Server Error"
+            }
+        }, 500 
