@@ -1,6 +1,4 @@
 import os
-# import gradio as gr
-import streamlit as st
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -8,6 +6,9 @@ load_dotenv()
 
 
 class Chatbot:
+    """
+    This class handles the chatbot. It sends a prompt to the chat completions API and returns the response from the GPT.
+    """
     def __init__(self) -> None:
         # INSERT PROMPT ENG / FINE TUNE HERE?
         self.client = OpenAI()
@@ -35,19 +36,3 @@ class Chatbot:
         )
         # check whether it's completion or completion.choices[0].message.content
         return completion.choices[0].message.content
-
-
-
-st.set_page_config(page_title="AI Assistant", page_icon="🤖", layout="wide")
-
-with st.chat_message(name="user"):
-    user_input = st.text_input(label='Enter text here')
-    chatbot = Chatbot()
-    assistant_reponse = chatbot.ask(user_input)
-    st.success(assistant_reponse)
-
-# with gr.Blocks() as demo:
-#     user_input = gr.Interface(fn=Chatbot.ask, inputs="textbox", outputs="textbox")
-
-# if __name__ == "__main__":
-#     demo.launch()
