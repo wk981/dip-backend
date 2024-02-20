@@ -1,0 +1,20 @@
+ steps:
+    # Update pip in vm
+    - name: 'python'
+      entrypoint: 'python'
+      args: ['-m', 'pip', 'install', '--upgrade', 'pip']
+    # Install dependencies in vm
+    # - name: python
+    #   entrypoint: pip
+    #   args: ["install", "-r", "requirements.txt", "--user"]
+    # Deploy to cloudrun
+    - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      args:
+      - gcloud
+      - functions
+      - deploy
+      - ${{ secrets.FUNCTION_NAME }}
+      - --region=${{ secrets.FUNCTION_REGION }}
+      - --source=.
+      - --trigger-http
+      - --runtime=RUNTIME
