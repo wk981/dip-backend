@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 #firebase initialization
 initialize_app()
 load_dotenv()
+
 # Initialize flask
 app = Flask(__name__)
 
