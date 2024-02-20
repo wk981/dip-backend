@@ -2,12 +2,16 @@ import os
 import json
 from flask import Flask, request, abort
 from werkzeug.exceptions import HTTPException
+from firebase_admin import initialize_app
+from firebase_functions import https_fn
 
 # Import necessaries libs, taken from Omar repo
 from instructor import patch
 from openai import OpenAI
 from dotenv import load_dotenv
 
+#firebase initialization
+initialize_app()
 load_dotenv()
 # Initialize flask
 app = Flask(__name__)
@@ -114,3 +118,10 @@ def send_chatbot():
                     "message": "Internal Server Error"
                 }
             }, 500
+
+# Expose Flask app as a single Cloud Function:
+
+@https_fn.on_request()
+def httpsflaskexample(req: https_fn.Request) -> https_fn.Response:
+    with app.request_context(req.environ):
+        return app.full_dispatch_request()
