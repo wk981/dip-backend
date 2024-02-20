@@ -7,7 +7,8 @@
     # - name: python
     #   entrypoint: pip
     #   args: ["install", "-r", "requirements.txt", "--user"]
-    # Deploy to cloudrun
+    # Deploy to cloudrun, reference: https://cloud.google.com/build/docs/deploying-builds/deploy-functions
+    # for runtime: run 'gcloud functions runtimes list' in terminal
     - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
       args:
       - gcloud
@@ -17,4 +18,4 @@
       - --region=asia-southeast2	
       - --source=.
       - --trigger-http
-      - --runtime=RUNTIME
+      - --runtime=python311
