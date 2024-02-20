@@ -13,8 +13,8 @@
       - gcloud
       - functions
       - deploy
-      - ${{ secrets.FUNCTION_NAME }}
-      - --region=${{ secrets.FUNCTION_REGION }}
+      - dip-backend-functions
+      - --region=asia-southeast2	
       - --source=.
       - --trigger-http
       - --runtime=RUNTIME
