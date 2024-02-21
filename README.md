@@ -6,3 +6,5 @@ pip install -r requirements.txt --user. Please update the requirements.txt when 
 
 # How to run the development server
 python -m flask --app main.py run
+
+# Testing deployment
