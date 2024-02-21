@@ -5,23 +5,31 @@ from werkzeug.exceptions import HTTPException
 from firebase_admin import initialize_app
 from firebase_functions import https_fn
 
-# Import necessaries libs, taken from Omar repo
-from instructor import patch
-from openai import OpenAI
-from dotenv import load_dotenv
+"""
+Removed: importing of certain libraries. Not needed as they are in "chatbot.py".
+Added: importing Chatbot() class from "chatbot.py" file.
+"""
 
-#firebase initialization
+# Import the chatbot class from "chatbot.py"
+from chatbot import Chatbot
+
+# Let's call the chatbot greg or smth
+greg = Chatbot()
+
+
+"""
+Removed: load_dotenv(). Not needed as it is in "chatbot.py".
+"""
+
+# firebase initialization
 initialize_app()
-load_dotenv()
 
 # Initialize flask
 app = Flask(__name__)
 
-client = patch(OpenAI())
-
-assistant = client.beta.assistants.retrieve(os.getenv('ASSISTANCE'))
-
-thread = client.beta.threads.create()
+"""
+Removed: client = patch(OpenAI()), assistant, and thread. Not needed as everything is in Chatbot() in "chatbot.py".
+"""
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
 @app.errorhandler(HTTPException)
@@ -60,42 +68,41 @@ def send_chatbot():
         
         else:
             # print(request_data['message'])
-            # Credit to Omar
-            message = client.beta.threads.messages.create(
-                thread_id = thread.id,
-                role="user",
-                content=request_data["message"]
-            )
-
-            run = client.beta.threads.runs.create(
-                thread_id=thread.id,
-                assistant_id=assistant.id,
-                instructions="You are a helpful assistant."
-            )
+            
+            """
+            Removed: message and run. No need anymore since we are not using Assistants API, we are using Chat Completions API.
+            Added: greg.ask() , this will send the Chatbot() the message input from user.
+            """
+            
+            # Ask Greg the message from user
+            greg.ask(request_data["message"])
 
             # while true is required for the api to keep runing while the api server is processing the message
             while True:
-                run_status = client.beta.threads.runs.retrieve(
-                        thread_id=thread.id,
-                        run_id=run.id
-                    )
-                print(run_status.status)
-                if run_status.status == 'completed':
-                    messages = client.beta.threads.messages.list(
-                        thread_id=thread.id
-                    )
-                    # print(messages)
-                    # Response from api server
-                    assistant_response = messages.data[0].content[0].text.value
-                    if assistant_response == "":
+                
+                """
+                Removed: run_status, and getting messages (aka response).
+                Added: answer = greg.answer()
+                Edited backend code also, if it's wrong then feel free to edit.
+                """
+                
+                    answer = greg.answer()
+                    if answer == "":
                         response_message = "No message received"
                     else:
-                        response_message = assistant_response
+                        response_message = answer
                     # return the relevant response code and message
                     return {
                         "message": response_message
-                    }, 204 if assistant_response == "" else None
+                    }, 204 if answer == "" else None
             #Return "No message received, please try again" if there is not completed
+                
+                """
+                Over here, need to remove "if run_status.status == 'failed' ".
+                But I don't know how to edit the code here.
+                But basically it's just supposed to give error if the bot didn't execute.
+                """
+
                 if run_status.status == 'failed':
                     print(run_status)
                     return {
