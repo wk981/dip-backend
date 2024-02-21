@@ -11,11 +11,10 @@ Added: importing Chatbot() class from "chatbot.py" file.
 """
 
 # Import the chatbot class from "chatbot.py"
-from chatbot import Chatbot
+from chatbot_handler import chatbot
 
 # Let's call the chatbot greg or smth
-greg = Chatbot()
-
+greg = chatbot.Chatbot()
 
 """
 Removed: load_dotenv(). Not needed as it is in "chatbot.py".
@@ -77,37 +76,16 @@ def send_chatbot():
             # Ask Greg the message from user
             greg.ask(request_data["message"])
 
-            # while true is required for the api to keep runing while the api server is processing the message
-            while True:
-                
-                """
-                Removed: run_status, and getting messages (aka response).
-                Added: answer = greg.answer()
-                Edited backend code also, if it's wrong then feel free to edit.
-                """
-                
-                    answer = greg.answer()
-                    if answer == "":
-                        response_message = "No message received"
-                    else:
-                        response_message = answer
-                    # return the relevant response code and message
-                    return {
-                        "message": response_message
-                    }, 204 if answer == "" else None
-            #Return "No message received, please try again" if there is not completed
-                
-                """
-                Over here, need to remove "if run_status.status == 'failed' ".
-                But I don't know how to edit the code here.
-                But basically it's just supposed to give error if the bot didn't execute.
-                """
-
-                if run_status.status == 'failed':
-                    print(run_status)
-                    return {
-                        "message": "Something went wrong, please try again"
-                    }, 503
+            answer = greg.answer()
+            # No reply from gpt
+            if answer == "":
+                response_message = "No message received"
+            else:
+                response_message = answer
+            # return the relevant response code and message
+            return {
+                "message": response_message
+            }, 204 if answer == "" else None
             
 
     except Exception as e:
