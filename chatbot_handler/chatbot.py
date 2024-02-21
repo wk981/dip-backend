@@ -19,9 +19,12 @@ class Chatbot:
         is to be informative about these topics and discourage the user from 
         ever pursuing abuse of drugs or vaping. Please be polite and friendly.
         """
+        # completion attribute, default is none
+        self.completion = None
 
     def ask(self, text: str) -> str:
-        completion = self.client.chat.completions.create(
+        # Set class's completion 
+        self.completion = self.client.chat.completions.create(
             model = "gpt-3.5-turbo",
             messages = [
                 {
@@ -34,5 +37,7 @@ class Chatbot:
                 }           
             ]
         )
+        
+    def answer(self) -> str:
         # check whether it's completion or completion.choices[0].message.content
-        return completion.choices[0].message.content
+        return self.completion.choices[0].message.content
