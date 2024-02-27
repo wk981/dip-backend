@@ -3,8 +3,10 @@ import openai
 
 from flask import Flask, request
 from werkzeug.exceptions import HTTPException
-from firebase_admin import initialize_app
+import firebase_admin
 from firebase_functions import https_fn
+from dotenv import load_dotenv
+from functools import wraps
 
 # Import the chatbot class from "chatbot.py"
 from chatbot_handler import chatbot
@@ -12,8 +14,14 @@ from chatbot_handler import chatbot
 # Let's call the chatbot greg or smth
 greg = chatbot.Chatbot()
 
+# load env
+load_dotenv()
+
 # firebase initialization
-initialize_app()
+credential_path = "./ntu-eee-dip-e028-firebase-adminsdk-vzsra-c405749a40.json" #IMPORTANT
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
+
+default_app = firebase_admin.initialize_app()
 
 # Initialize flask
 app = Flask(__name__)
@@ -33,6 +41,53 @@ def handle_exception(e):
     })
     response.content_type = "application/json"
     return response
+
+# Middleware
+def IdToken_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        idToken = None
+
+        # check for authorization in header
+        if "Authorization" in request.headers:
+            authHeader = request.headers['Authorization']
+            idToken = authHeader[len('Bearer '):]
+        if not idToken:
+            return {
+                "message": "Authentication Token is missing"
+            }, 401
+        try:
+            # Decode it
+            decoded_token = firebase_admin.auth.verify_id_token(idToken)
+            
+            # return unauthorized if nth in decoded_token
+            if decoded_token is None:
+                return {
+                    "errors": {
+                        "message" : "Invalid token"
+                    }
+                }, 401
+            
+        except firebase_admin._token_gen.ExpiredIdTokenError as e:
+            #Expired token
+            print(e)
+            return{
+                "errors":{
+                    "message": "Token Expired"
+                }
+            }, 401
+
+        except Exception as e:
+            print(e)
+            print(type(e))
+            return{
+                "error":{
+                    "message": str(e)
+                }
+            }, 500
+        return f(decoded_token, *args, **kwargs)
+
+    return decorated
 
 # / Get route that returns hello world
 @app.route("/")
@@ -80,6 +135,11 @@ def send_chatbot():
         # Log any other exceptions
         print(e)
 
+# A route to test idtoken
+@app.route("/testIdToken")
+@IdToken_required
+def test_idToken(decoded_token):
+    return decoded_token, 200
 # Expose Flask app as a single Cloud Function:
 
 @https_fn.on_request()
