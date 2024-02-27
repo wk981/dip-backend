@@ -1,0 +1,7 @@
+functions-framework==3.*
+Flask
+openai
+instructor
+python-dotenv
+firebase-admin
+firebase-functions
