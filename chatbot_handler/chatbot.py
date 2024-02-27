@@ -35,9 +35,19 @@ class Chatbot:
                     "role": "user",
                     "content": text
                 }           
-            ]
+            ],
+            stream=True # Remove this if you do not want to stream the output
         )
         
     def answer(self) -> str:
         # check whether it's completion or completion.choices[0].message.content
         return self.completion.choices[0].message.content
+
+    # def streaming(self):
+    #     for chunk in self.completion:
+    #         if chunk.choices[0].delta.content is not None:
+    #             print(chunk.choices[0].delta.content, end="")
+    #             yield chunk.choices[0].delta.content + ""
+    def getCompletion(self):
+        return self.completion
+                

@@ -1,14 +1,9 @@
 import os
 import json
-from flask import Flask, request, abort
+from flask import Flask, request, abort, Response
 from werkzeug.exceptions import HTTPException
 from firebase_admin import initialize_app
 from firebase_functions import https_fn
-
-"""
-Removed: importing of certain libraries. Not needed as they are in "chatbot.py".
-Added: importing Chatbot() class from "chatbot.py" file.
-"""
 
 # Import the chatbot class from "chatbot.py"
 from chatbot_handler import chatbot
@@ -16,19 +11,11 @@ from chatbot_handler import chatbot
 # Let's call the chatbot greg or smth
 greg = chatbot.Chatbot()
 
-"""
-Removed: load_dotenv(). Not needed as it is in "chatbot.py".
-"""
-
 # firebase initialization
 initialize_app()
 
 # Initialize flask
 app = Flask(__name__)
-
-"""
-Removed: client = patch(OpenAI()), assistant, and thread. Not needed as everything is in Chatbot() in "chatbot.py".
-"""
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
 @app.errorhandler(HTTPException)
@@ -66,16 +53,10 @@ def send_chatbot():
             }, 400
         
         else:
-            # print(request_data['message'])
-            
-            """
-            Removed: message and run. No need anymore since we are not using Assistants API, we are using Chat Completions API.
-            Added: greg.ask() , this will send the Chatbot() the message input from user.
-            """
-            
             # Ask Greg the message from user
             greg.ask(request_data["message"])
 
+            # Normal answer
             answer = greg.answer()
             # No reply from gpt
             if answer == "":
@@ -105,8 +86,34 @@ def send_chatbot():
                 }
             }, 500
 
-# Expose Flask app as a single Cloud Function:
 
+@app.route('/chatbot/sse', methods=["POST"])
+def stream():
+    request_data = request.get_json()
+    if('message' not in request_data):
+        return {
+                "message": "Bad Request"
+        }, 400
+    greg.ask(request_data["message"])
+    try:
+        def eventStream():
+            # while True:
+                # wait for source data to be available, then push it
+            completion = greg.getCompletion()
+            for chunk in completion:
+                if chunk.choices[0].delta.content is not None:
+                    yield 'data: {}\n\n'.format(chunk.choices[0].delta.content)
+        return Response(eventStream(), mimetype="text/event-stream")
+    except Exception as e:
+        print(e)
+        return {
+                "error":{
+                    "message": "Internal Server Error"
+                }
+        }, 500
+
+
+# Expose Flask app as a single Cloud Function:
 @https_fn.on_request()
 def httpsflaskexample(req: https_fn.Request) -> https_fn.Response:
     with app.request_context(req.environ):
