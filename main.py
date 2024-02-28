@@ -13,10 +13,12 @@ from chatbot_handler import chatbot
 
 # load env
 load_dotenv()
-
+env = os.getenv('PYTHON_ENV')
+print(env)
 # firebase initialization
-credential_path = "./ntu-eee-dip-e028-firebase-adminsdk-vzsra-c405749a40.json" #IMPORTANT
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
+if env != "production":
+    credential_path = "./ntu-eee-dip-e028-firebase-adminsdk-vzsra-c405749a40.json" #IMPORTANT
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
 
 default_app = firebase_admin.initialize_app()
 
