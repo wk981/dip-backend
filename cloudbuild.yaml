@@ -1,0 +1,21 @@
+ steps:
+    # Update pip in vm
+    - name: 'python'
+      entrypoint: 'python'
+      args: ['-m', 'pip', 'install', '--upgrade', 'pip']
+    # Install dependencies in vm
+    # - name: python
+    #   entrypoint: pip
+    #   args: ["install", "-r", "requirements.txt", "--user"]
+    # Deploy to cloudrun, reference: https://cloud.google.com/build/docs/deploying-builds/deploy-functions
+    # for runtime: run 'gcloud functions runtimes list' in terminal
+    - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      args:
+      - gcloud
+      - functions
+      - deploy
+      - dip-backend-functions
+      - --region=asia-southeast2	
+      - --source=.
+      - --trigger-http
+      - --runtime=python311

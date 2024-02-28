@@ -3,22 +3,29 @@ import openai
 
 from flask import Flask, request
 from werkzeug.exceptions import HTTPException
-
-# Import necessaries libs, taken from Omar repo
-from instructor import patch
-from openai import OpenAI
+import firebase_admin
+from firebase_functions import https_fn
 from dotenv import load_dotenv
+from functools import wraps
 
+# Import the chatbot class from "chatbot.py"
+from chatbot_handler import chatbot
+
+# Let's call the chatbot greg or smth
+greg = chatbot.Chatbot()
+
+# load env
 load_dotenv()
+
+# firebase initialization
+credential_path = "./ntu-eee-dip-e028-firebase-adminsdk-vzsra-c405749a40.json" #IMPORTANT
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
+
+default_app = firebase_admin.initialize_app()
+
 # Initialize flask
 app = Flask(__name__)
 app.debug = True # UNCOMMENT FOR DEVELOPMENT, TODO: MOVE TO ENV VARIABLE
-
-client = patch(OpenAI())
-
-assistant = client.beta.assistants.retrieve(os.getenv('ASSISTANCE'))
-
-thread = client.beta.threads.create()
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
 @app.errorhandler(HTTPException)
@@ -34,6 +41,53 @@ def handle_exception(e):
     })
     response.content_type = "application/json"
     return response
+
+# Middleware
+def IdToken_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        idToken = None
+
+        # check for authorization in header
+        if "Authorization" in request.headers:
+            authHeader = request.headers['Authorization']
+            idToken = authHeader[len('Bearer '):]
+        if not idToken:
+            return {
+                "message": "Authentication Token is missing"
+            }, 401
+        try:
+            # Decode it
+            decoded_token = firebase_admin.auth.verify_id_token(idToken)
+            
+            # return unauthorized if nth in decoded_token
+            if decoded_token is None:
+                return {
+                    "errors": {
+                        "message" : "Invalid token"
+                    }
+                }, 401
+            
+        except firebase_admin._token_gen.ExpiredIdTokenError as e:
+            #Expired token
+            print(e)
+            return{
+                "errors":{
+                    "message": "Token Expired"
+                }
+            }, 401
+
+        except Exception as e:
+            print(e)
+            print(type(e))
+            return{
+                "error":{
+                    "message": str(e)
+                }
+            }, 500
+        return f(decoded_token, *args, **kwargs)
+
+    return decorated
 
 # / Get route that returns hello world
 @app.route("/")
@@ -55,46 +109,21 @@ def send_chatbot():
                 "message": "Bad Request"
             }, 400
         else:
-            # Credit to Omar
-            message = client.beta.threads.messages.create(
-                thread_id=thread.id,
-                role="user",
-                content=request_data["message"]
-            )
+            # print(request_data['message'])
+            
+            # Ask Greg the message from user
+            greg.ask(request_data["message"])
 
-            run = client.beta.threads.runs.create(
-                thread_id=thread.id,
-                assistant_id=assistant.id,
-                instructions="You are a helpful assistant."
-            )
-
-            while True:
-                run_status = client.beta.threads.runs.retrieve(
-                    thread_id=thread.id,
-                    run_id=run.id
-                )
-                print(run_status.status)
-                if run_status.status == 'completed':
-                    messages = client.beta.threads.messages.list(
-                        thread_id=thread.id
-                    )
-                    assistant_response = messages.data[0].content[0].text.value
-                    if assistant_response == "":
-                        response_message = "No message received"
-                    else:
-                        response_message = assistant_response
-                    # return the relevant response code and message
-                    return {
-                        "message": response_message
-                    }, 204 if assistant_response == "" else None
-                elif run_status.status == 'failed':
-                    print(run_status)
-                    return {
-                        "message": "Something went wrong, please try again"
-                    }, 503
-                else:
-                    # Sleep to avoid busy waiting and overloading the server
-                    time.sleep(1)
+            answer = greg.answer()
+            # No reply from gpt
+            if answer == "":
+                response_message = "No message received"
+            else:
+                response_message = answer
+            # return the relevant response code and message
+            return {
+                "message": response_message
+            }, 204 if answer == "" else None
 
     except openai.AuthenticationError:
         return {
@@ -105,8 +134,15 @@ def send_chatbot():
     except Exception as e:
         # Log any other exceptions
         print(e)
-        return {
-            "error": {
-                "message": "Internal Server Error"
-            }
-        }, 500 
+
+# A route to test idtoken
+@app.route("/testIdToken")
+@IdToken_required
+def test_idToken(decoded_token):
+    return decoded_token, 200
+# Expose Flask app as a single Cloud Function:
+
+@https_fn.on_request()
+def httpsflaskexample(req: https_fn.Request) -> https_fn.Response:
+    with app.request_context(req.environ):
+        return app.full_dispatch_request()

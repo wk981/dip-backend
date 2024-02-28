@@ -3,13 +3,10 @@
 Backend to be hosted on google functions
 
 # Packages
-
-pip install -U Flask
-pip install -U openai
-pip install -U instructor
-pip install -U python-dotenv
-pip install flask[async]
+pip install -r requirements.txt --user. Please update the requirements.txt when you added a new package.
 
 # How to run the development server
 
 python -m flask --app main.py run
+
+# Testing deployment
