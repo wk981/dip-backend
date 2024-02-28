@@ -1,7 +1,7 @@
 import os, json, time
 import openai
 
-from flask import Flask, request
+from flask import Flask, request, Response
 from werkzeug.exceptions import HTTPException
 import firebase_admin
 from firebase_functions import https_fn
@@ -10,9 +10,6 @@ from functools import wraps
 
 # Import the chatbot class from "chatbot.py"
 from chatbot_handler import chatbot
-
-# Let's call the chatbot greg or smth
-greg = chatbot.Chatbot()
 
 # load env
 load_dotenv()
@@ -99,7 +96,8 @@ def hello_world():
 
 # A POST route to /chatbot. It will take in a json req body and send it to openai api. Take in a json {message:}
 @app.route("/chatbot/send", methods=["POST"])
-def send_chatbot():
+@IdToken_required
+def send_chatbot(decoded_token):
     try:
         # get value from request body. Only accept message
         request_data = request.get_json()
@@ -109,8 +107,12 @@ def send_chatbot():
                 "message": "Bad Request"
             }, 400
         else:
+            # Log current user
+            print("User" + str(decoded_token))
+            # Let's call the chatbot greg or smth
+            greg = chatbot.Chatbot()
             # Ask Greg the message from user
-            greg.ask(request_data["message"])
+            greg.setCompletion(request_data["message"],streamChoice=False)
 
             # Normal answer
             answer = greg.answer()
@@ -142,13 +144,18 @@ def test_idToken(decoded_token):
 
 
 @app.route('/chatbot/sse', methods=["POST"])
-def stream():
+@IdToken_required
+def stream(decoded_token):
     request_data = request.get_json()
     if('message' not in request_data):
         return {
                 "message": "Bad Request"
         }, 400
-    greg.ask(request_data["message"])
+    # Log current user
+    print("User" + str(decoded_token))
+    # Let's call the chatbot greg or smth
+    greg = chatbot.Chatbot()
+    greg.setCompletion(request_data["message"],streamChoice=True)
     try:
         def eventStream():
             # while True:

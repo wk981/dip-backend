@@ -22,7 +22,8 @@ class Chatbot:
         # completion attribute, default is none
         self.completion = None
 
-    def ask(self, text: str) -> str:
+    # Enable user to set stream or no stream for completion / ask
+    def setCompletion(self, text: str, streamChoice: bool):
         # Set class's completion 
         self.completion = self.client.chat.completions.create(
             model = "gpt-3.5-turbo",
@@ -36,7 +37,7 @@ class Chatbot:
                     "content": text
                 }           
             ],
-            stream=True # Remove this if you do not want to stream the output
+            stream=streamChoice # Remove this if you do not want to stream the output
         )
         
     def answer(self) -> str:
