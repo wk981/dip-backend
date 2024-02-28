@@ -1,9 +1,12 @@
-import os
-import json
-from flask import Flask, request, abort, Response
+import os, json, time
+import openai
+
+from flask import Flask, request
 from werkzeug.exceptions import HTTPException
-from firebase_admin import initialize_app
+import firebase_admin
 from firebase_functions import https_fn
+from dotenv import load_dotenv
+from functools import wraps
 
 # Import the chatbot class from "chatbot.py"
 from chatbot_handler import chatbot
@@ -11,11 +14,18 @@ from chatbot_handler import chatbot
 # Let's call the chatbot greg or smth
 greg = chatbot.Chatbot()
 
+# load env
+load_dotenv()
+
 # firebase initialization
-initialize_app()
+credential_path = "./ntu-eee-dip-e028-firebase-adminsdk-vzsra-c405749a40.json" #IMPORTANT
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
+
+default_app = firebase_admin.initialize_app()
 
 # Initialize flask
 app = Flask(__name__)
+app.debug = True # UNCOMMENT FOR DEVELOPMENT, TODO: MOVE TO ENV VARIABLE
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
 @app.errorhandler(HTTPException)
@@ -32,6 +42,53 @@ def handle_exception(e):
     response.content_type = "application/json"
     return response
 
+# Middleware
+def IdToken_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        idToken = None
+
+        # check for authorization in header
+        if "Authorization" in request.headers:
+            authHeader = request.headers['Authorization']
+            idToken = authHeader[len('Bearer '):]
+        if not idToken:
+            return {
+                "message": "Authentication Token is missing"
+            }, 401
+        try:
+            # Decode it
+            decoded_token = firebase_admin.auth.verify_id_token(idToken)
+            
+            # return unauthorized if nth in decoded_token
+            if decoded_token is None:
+                return {
+                    "errors": {
+                        "message" : "Invalid token"
+                    }
+                }, 401
+            
+        except firebase_admin._token_gen.ExpiredIdTokenError as e:
+            #Expired token
+            print(e)
+            return{
+                "errors":{
+                    "message": "Token Expired"
+                }
+            }, 401
+
+        except Exception as e:
+            print(e)
+            print(type(e))
+            return{
+                "error":{
+                    "message": str(e)
+                }
+            }, 500
+        return f(decoded_token, *args, **kwargs)
+
+    return decorated
+
 # / Get route that returns hello world
 @app.route("/")
 def hello_world():
@@ -47,11 +104,10 @@ def send_chatbot():
         # get value from request body. Only accept message
         request_data = request.get_json()
         # return bad request
-        if('message' not in request_data):
+        if 'message' not in request_data:
             return {
-                    "message": "Bad Request"
+                "message": "Bad Request"
             }, 400
-        
         else:
             # Ask Greg the message from user
             greg.ask(request_data["message"])
@@ -67,24 +123,22 @@ def send_chatbot():
             return {
                 "message": response_message
             }, 204 if answer == "" else None
-            
 
+    except openai.AuthenticationError:
+        return {
+            "error": {
+                "message": "Incorrect API key provided"
+            }
+        }, 401
     except Exception as e:
-        # If authentication error, return 401
+        # Log any other exceptions
         print(e)
-        if(type(e).__name__ is "AuthenticationError"):
-            return {
-                "error":{
-                    "message": "Incorrect API key provided"
-                }
-            },401
-        # Otherwise return 500
-        else:
-            return {
-                "error":{
-                    "message": "Internal Server Error"
-                }
-            }, 500
+
+# A route to test idtoken
+@app.route("/testIdToken")
+@IdToken_required
+def test_idToken(decoded_token):
+    return decoded_token, 200
 
 
 @app.route('/chatbot/sse', methods=["POST"])
