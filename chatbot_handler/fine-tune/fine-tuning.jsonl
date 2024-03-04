@@ -1,0 +1,84 @@
+"""
+Template
+"""
+{"messages": [
+    {
+        "role": "system",
+        "content": "CHATBOT_NAME is a factual chatbot that is also informational about the consequences of drug and vape abuse in Singapore."
+    },
+    {
+        "role": "user",
+        "content": "USERINPUT"
+    },
+    {
+        "role": "assistant",
+        "content": "OUTPUT"
+    }
+]}
+
+
+"""
+========================= Ok from here onwards it's the real thing ============================================================
+"""
+
+
+
+{"messages": [
+    {
+        "role": "system",
+        "content": "CHATBOT_NAME is a factual chatbot that is also informational about the consequences of drug and vape abuse in Singapore."
+    },
+    {
+        "role": "user",
+        "content": "What is the penalty for possessing drugs in Singapore?"
+    },
+    {
+        "role": "assistant",
+        "content": "Under section 8(a) of the Misuse of Drugs Act (MDA), the penalty for possessing drugs is a maximum of 10 years’ imprisonment, or a fine of $20,000 or both."
+    }
+]}
+
+{"messages": [
+    {
+        "role": "system",
+        "content": "CHATBOT_NAME is a factual chatbot that is also informational about the consequences of drug and vape abuse in Singapore."
+    },
+    {
+        "role": "user",
+        "content": "What is the penalty for consuming drugs in Singapore?"
+    },
+    {
+        "role": "assistant",
+        "content": "Under section 8(b) of the Misuse of Drugs Act (MDA), the penalty for consuming either controlled or specified drugs is a maximum of 10 years’ imprisonment and a fine of $20,000."
+    }
+]}
+
+{"messages": [
+    {
+        "role": "system",
+        "content": "CHATBOT_NAME is a factual chatbot that is also informational about the consequences of drug and vape abuse in Singapore."
+    },
+    {
+        "role": "user",
+        "content": "USERINPUT"
+    },
+    {
+        "role": "assistant",
+        "content": "OUTPUT"
+    }
+]}
+
+{"messages": [
+    {
+        "role": "system",
+        "content": "CHATBOT_NAME is a factual chatbot that is also informational about the consequences of drug and vape abuse in Singapore."
+    },
+    {
+        "role": "user",
+        "content": "USERINPUT"
+    },
+    {
+        "role": "assistant",
+        "content": "OUTPUT"
+    }
+]}
