@@ -15,3 +15,5 @@ user_input = input("Enter input here: ")
 # Now you wanna send that input to the GPT model via the Chatbot() class object, which we have previously initialised as "example_variable".
 chatbot_output = example_variable.ask(user_input)
 ```
+
+The folder `fine-tune` contains a jsonl file used for fine-tuning the AI model.
