@@ -1,3 +1,5 @@
+# Fine-tuning stuff
+
 `fine-tuning.jsonl` contains the information used to fine-tune the AI model. The information is taken directly from Kian Sian's presentation slides from week 2, along with some other information found online.
 
 ## To Do:
