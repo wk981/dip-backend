@@ -16,4 +16,5 @@ user_input = input("Enter input here: ")
 chatbot_output = example_variable.ask(user_input)
 ```
 
+## fine-tune folder
 The folder `fine-tune` contains a jsonl file used for fine-tuning the AI model.
