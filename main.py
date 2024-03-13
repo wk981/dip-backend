@@ -26,7 +26,7 @@ default_app = firebase_admin.initialize_app()
 # Initialize flask
 app = Flask(__name__)
 # CORS
-CORS(app)
+CORS(app, cors_origins=["http://localhost:5173/"])
 app.debug = True # UNCOMMENT FOR DEVELOPMENT, TODO: MOVE TO ENV VARIABLE
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
@@ -185,8 +185,8 @@ def stream(decoded_token):
 # CORS configured to firebase.com and localhost
 @https_fn.on_request(
     cors=options.CorsOptions(
-        cors_origins= [r'firebase\.com$', r'http://localhost\:5173/'],
-        cors_methods=["get", "post"],
+        cors_origins= True,
+        cors_methods=["GET", "POST"],
     )
 )
 def httpsflaskexample(req: https_fn.Request) -> https_fn.Response:
