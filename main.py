@@ -184,9 +184,7 @@ def stream(decoded_token):
 
 # Expose Flask app as a single Cloud Function:
 # CORS configured to firebase.com and localhost
-@https_fn.on_request(
-    cors=True
-)
+@https_fn.on_request()
 def httpsflaskexample(req: https_fn.Request) -> https_fn.Response:
     with app.request_context(req.environ):
         return app.full_dispatch_request()
