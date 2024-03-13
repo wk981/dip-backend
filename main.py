@@ -4,7 +4,7 @@ import openai
 from flask import Flask, request, Response
 from werkzeug.exceptions import HTTPException
 import firebase_admin
-from firebase_functions import https_fn
+from firebase_functions import https_fn, options
 from dotenv import load_dotenv
 from functools import wraps
 
@@ -182,7 +182,13 @@ def stream(decoded_token):
 
 
 # Expose Flask app as a single Cloud Function:
-@https_fn.on_request()
+# CORS configured to firebase.com and localhost
+@https_fn.on_request(
+    cors=options.CorsOptions(
+        cors_origins= [r'firebase\.com$', r'https//localhost\.com'],
+        cors_methods=["get", "post"],
+    )
+)
 def httpsflaskexample(req: https_fn.Request) -> https_fn.Response:
     with app.request_context(req.environ):
         return app.full_dispatch_request()
