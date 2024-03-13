@@ -29,7 +29,7 @@ app = Flask(__name__)
 # CORS
 CORS(app, cors_origins=["*"])
 app.debug = True # UNCOMMENT FOR DEVELOPMENT, TODO: MOVE TO ENV VARIABLE
-logging.getLogger('flask_cors').level = logging.DEBUG
+# logging.getLogger('flask_cors').level = logging.DEBUG
 
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
