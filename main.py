@@ -10,6 +10,7 @@ from functools import wraps
 
 # Import the chatbot class from "chatbot.py"
 from chatbot_handler import chatbot
+from flask_cors import CORS
 
 # load env
 load_dotenv()
@@ -24,6 +25,8 @@ default_app = firebase_admin.initialize_app()
 
 # Initialize flask
 app = Flask(__name__)
+# CORS
+CORS(app)
 app.debug = True # UNCOMMENT FOR DEVELOPMENT, TODO: MOVE TO ENV VARIABLE
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
@@ -163,9 +166,11 @@ def stream(decoded_token):
             # while True:
                 # wait for source data to be available, then push it
             completion = greg.getCompletion()
+            prevChunk = ""
             for chunk in completion:
                 if chunk.choices[0].delta.content is not None:
-                    yield 'data: {}\n\n'.format(chunk.choices[0].delta.content)
+                    yield chunk.choices[0].delta.content
+                    
         return Response(eventStream(), mimetype="text/event-stream")
     except Exception as e:
         print(e)
