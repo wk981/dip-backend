@@ -15,7 +15,7 @@ from flask_cors import CORS
 # load env
 load_dotenv()
 env = os.getenv('PYTHON_ENV')
-print(env)
+
 # firebase initialization
 if env != "production":
     credential_path = "./ntu-eee-dip-e028-firebase-adminsdk-vzsra-c405749a40.json" #IMPORTANT
@@ -25,10 +25,12 @@ default_app = firebase_admin.initialize_app()
 
 # Initialize flask
 app = Flask(__name__)
+
 # CORS
-if env != "production":
-    CORS(app)
+CORS(app, cors_origins=["*"])
 app.debug = True # UNCOMMENT FOR DEVELOPMENT, TODO: MOVE TO ENV VARIABLE
+logging.getLogger('flask_cors').level = logging.DEBUG
+
 
 # Error handling, this will be invoked when the user tries to invoke a non existing route
 @app.errorhandler(HTTPException)
