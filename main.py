@@ -185,7 +185,7 @@ def stream(decoded_token):
 # CORS configured to firebase.com and localhost
 @https_fn.on_request(
     cors=options.CorsOptions(
-        cors_origins= [r'firebase\.com$', "http://localhost:5173/"],
+        cors_origins= [r'firebase\.com$', r'http://localhost\:5173/'],
         cors_methods=["get", "post"],
     )
 )
