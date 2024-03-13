@@ -5,3 +5,4 @@ instructor
 python-dotenv
 firebase-admin
 firebase-functions
+flask-cors
