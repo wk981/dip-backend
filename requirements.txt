@@ -6,3 +6,6 @@ python-dotenv
 firebase-admin
 firebase-functions
 flask-cors
+requests
+bs4
+datetime
