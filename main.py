@@ -1,16 +1,20 @@
 import os, json, time
 import openai
 
-from flask import Flask, request, Response
+from flask import Flask, request, Response, jsonify
 from werkzeug.exceptions import HTTPException
 import firebase_admin
 from firebase_functions import https_fn, options
 from dotenv import load_dotenv
 from functools import wraps
+from datetime import datetime, timedelta
 
 # Import the chatbot class from "chatbot.py"
 from chatbot_handler import chatbot
 from flask_cors import CORS
+
+# Import news API functions
+from news_api import get_news
 
 # load env
 load_dotenv()
@@ -183,7 +187,56 @@ def stream(decoded_token):
                 }
         }, 500
 
+# A GET route to fetch news articles
+@app.route("/fetch_news", methods=["GET"])
+def fetch_news():
+    """
+    Fetches news articles based on the specified topic and end date.
 
+    Request args:
+        topic (str): Topic of the news articles.
+        end_date (str): Date for when this func is called in 'yyyy-mm-dd' format.
+
+    Returns:
+        dict: A JSON response containing the fetched news article metadata & content.
+    """
+    try:
+        # Check if required arguments are provided
+        if not 'topic' in request.args or not 'end_date' in request.args:
+            return jsonify({"error": "Both topic and end_date are required."}), 400
+        
+        # Parse request arguments
+        topic = request.args['topic']
+        end_date_str = request.args['end_date']
+
+        # Validate topic
+        if topic not in ['drug', 'vape']:
+            return jsonify({"error": "Invalid topic. Topic should be either 'drug' or 'vape'."}), 400
+        
+        # Validate and parse end_date
+        try:
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError("Incorrect date format. Please use 'yyyy-mm-dd'.")
+        
+        # Calculate start date to search news from (maximum one month before the date specified)
+        start_date = end_date - timedelta(days=28)
+
+        # Format dates to ISO 8601 format
+        start_date = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_date = end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        # Get news articles
+        news_articles = get_news(topic,start_date ,end_date)
+
+        # Return the fetched news articles as JSON response
+        return jsonify({"news_articles": news_articles}), 200
+
+    except Exception as e:
+        # Log any other exceptions
+        print(e)
+        return jsonify({"error": "Internal Server Error"}), 500
+    
 # Expose Flask app as a single Cloud Function:
 # CORS configured to firebase.com and localhost
 @https_fn.on_request()
