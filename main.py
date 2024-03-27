@@ -194,40 +194,53 @@ def fetch_news():
     Fetches news articles based on the specified topic and end date.
 
     Request args:
-        topic (str): Topic of the news articles.
-        end_date (str): Date for when this func is called in 'yyyy-mm-dd' format.
+        topic (str): Topic of the news articles. "drug" or "vape" only.
+        current_date (str): Date for when this func is called in 'yyyy-mm-dd' format.
 
     Returns:
         dict: A JSON response containing the fetched news article metadata & content.
+    
+        Response example:
+            {
+                "news_articles": [
+                    {
+                        "content": # article
+                        "url: # source url
+                        "publishedAt: # published date
+                        "title": # article title 
+                    }
+                ],
+            }
     """
     try:
         # Check if required arguments are provided
-        if not 'topic' in request.args or not 'end_date' in request.args:
-            return jsonify({"error": "Both topic and end_date are required."}), 400
+        if not 'topic' in request.args or not 'current_date' in request.args:
+            return jsonify({"error": "Both topic and current_date are required."}), 400
         
         # Parse request arguments
         topic = request.args['topic']
-        end_date_str = request.args['end_date']
+        current_date_str = request.args['current_date']
+        token = os.getenv("NEWS_API_TOKEN")
 
         # Validate topic
         if topic not in ['drug', 'vape']:
             return jsonify({"error": "Invalid topic. Topic should be either 'drug' or 'vape'."}), 400
         
-        # Validate and parse end_date
+        # Validate and parse current_date
         try:
-            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+            current_date = datetime.strptime(current_date_str, "%Y-%m-%d")
         except ValueError:
             raise ValueError("Incorrect date format. Please use 'yyyy-mm-dd'.")
         
         # Calculate start date to search news from (maximum one month before the date specified)
-        start_date = end_date - timedelta(days=28)
+        start_date = current_date - timedelta(days=28)
 
         # Format dates to ISO 8601 format
         start_date = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-        end_date = end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
+        current_date = current_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
         # Get news articles
-        news_articles = get_news(topic,start_date ,end_date)
+        news_articles = get_news(token, topic, start_date, current_date)
 
         # Return the fetched news articles as JSON response
         return jsonify({"news_articles": news_articles}), 200

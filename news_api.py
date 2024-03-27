@@ -41,7 +41,7 @@ def get_content_from_url(url):
         print(f"An error occurred: {e}")
         return None
 
-def get_news(topic='drug',start_date=None ,end_date=None):
+def get_news(access_token=None, topic='drug', start_date=None, end_date=None):
     """
     Fetches news articles from News API.
 
@@ -52,12 +52,11 @@ def get_news(topic='drug',start_date=None ,end_date=None):
     Returns:
         list: A list of dictionaries, each representing a news article with metadata & content.
     """
-    access_key = '2f171ec4cf714f03844528984d7d7e4f'
     base_url = 'https://newsapi.org/v2/everything'
     
     # Request parameters
     params = {
-        'apiKey': access_key,
+        'apiKey': access_token,
         'q': topic,
         'domains': 'channelnewsasia.com',
         'language': 'en',
