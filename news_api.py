@@ -2,7 +2,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-def get_content_from_url(url):
+def get_article(url):
     """
     Scrape the content of news from specified URL
 
@@ -41,9 +41,9 @@ def get_content_from_url(url):
         print(f"An error occurred: {e}")
         return None
 
-def get_news(topic='drug',start_date=None ,end_date=None):
+def get_metadata(topic='drug',start_date=None ,end_date=None):
     """
-    Fetches news articles from News API.
+    Fetches news metadata from News API.
 
     Args:
         topic (str): Domain to search for. Only 'drug' or 'vape' are supported.
@@ -72,17 +72,16 @@ def get_news(topic='drug',start_date=None ,end_date=None):
     if response.status_code == 200:
         data = response.json()
         if data['status'] == 'ok' and 'articles' in data:
-            articles = []
-            for article in data['articles']:
-                article['content'] = get_content_from_url(article['url'])
-                articles.append({k: article[k] for k in ['title', 'url', 'publishedAt', 'content']})
-            return articles
+            metadata = []
+            for metadata in data['articles']:
+                metadata.append({k: metadata[k] for k in ['title', 'url', 'publishedAt', 'urlToImage']})
+            return metadata
         else:
-            print("No articles found in the response.")
+            print("No metadata found in the response.")
     else:
         print("Error:", response.status_code)
         print(response.json())
     
-    return []  # Return an empty list if no articles are found
+    return []  # Return an empty list if no metadata are found
 
 
