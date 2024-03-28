@@ -238,9 +238,8 @@ def fetch_news():
         # Format dates to ISO 8601 format
         start_date = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
         current_date = current_date.strftime("%Y-%m-%dT%H:%M:%SZ")
-
         # Get news' metadata
-        metadata = get_metadata(topic, start_date, current_date)
+        metadata = get_metadata(token, topic, start_date, current_date)
 
         # Return the fetched news metadata as JSON response
         return jsonify({"metadata": metadata}), 200
