@@ -14,7 +14,7 @@ from chatbot_handler import chatbot
 from flask_cors import CORS
 
 # Import news API functions
-from news_api import get_news
+from news_api import get_metadata, get_article
 
 # load env
 load_dotenv()
@@ -187,18 +187,18 @@ def stream(decoded_token):
                 }
         }, 500
 
-# A GET route to fetch news articles
-@app.route("/fetch_news", methods=["GET"])
+# A GET route to fetch news (metadata only)
+@app.route("/fetch_metadata", methods=["GET"])
 def fetch_news():
     """
-    Fetches news articles based on the specified topic and end date.
+    Fetches news metadata based on the specified topic and end date.
 
     Request args:
         topic (str): Topic of the news articles.
         end_date (str): Date for when this func is called in 'yyyy-mm-dd' format.
 
     Returns:
-        dict: A JSON response containing the fetched news article metadata & content.
+        dict: A JSON response containing the fetched news metadata
     """
     try:
         # Check if required arguments are provided
@@ -220,17 +220,43 @@ def fetch_news():
             raise ValueError("Incorrect date format. Please use 'yyyy-mm-dd'.")
         
         # Calculate start date to search news from (maximum one month before the date specified)
-        start_date = end_date - timedelta(days=28)
+        start_date = end_date - timedelta(days=25)
 
         # Format dates to ISO 8601 format
         start_date = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
         end_date = end_date.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        # Get news articles
-        news_articles = get_news(topic,start_date ,end_date)
+        # Get news' metadata
+        metadata = get_metadata(topic, start_date ,end_date)
 
-        # Return the fetched news articles as JSON response
-        return jsonify({"news_articles": news_articles}), 200
+        # Return the fetched news metadata as JSON response
+        return jsonify({"metadata": metadata}), 200
+
+    except Exception as e:
+        # Log any other exceptions
+        print(e)
+        return jsonify({"error": "Internal Server Error"}), 500
+    
+
+# A GET route to fetch news (content only)
+@app.route("/fetch_article", methods=["GET"])
+def fetch_article():
+    """
+    Fetches news article based on the specified url.
+
+    Request args:
+        url (str): Url of the news article.
+
+    Returns:
+        dict: A JSON response containing the fetched news article
+    """
+    try:
+        if not 'url' in request.args:
+            return jsonify({"error": "Url is required to scrap news."}), 400
+        
+        url = request.args['url']
+
+        return jsonify({"news_article": get_article(url)}), 200
 
     except Exception as e:
         # Log any other exceptions
