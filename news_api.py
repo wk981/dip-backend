@@ -41,11 +41,8 @@ def get_article(url):
         print(f"An error occurred: {e}")
         return None
 
-<<<<<<< HEAD
-def get_news(access_token=None, topic='drug', start_date=None, end_date=None):
-=======
-def get_metadata(topic='drug',start_date=None ,end_date=None):
->>>>>>> feat/news-api
+
+def get_metadata(access_token=None, topic='drug',start_date=None ,end_date=None):
     """
     Fetches news metadata from News API.
 
