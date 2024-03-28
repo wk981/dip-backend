@@ -72,10 +72,10 @@ def get_metadata(access_token=None, topic='drug',start_date=None ,end_date=None)
     if response.status_code == 200:
         data = response.json()
         if data['status'] == 'ok' and 'articles' in data:
-            metadata = []
+            res = []
             for metadata in data['articles']:
-                metadata.append({k: metadata[k] for k in ['title', 'url', 'publishedAt', 'urlToImage']})
-            return metadata
+                res.append({k: metadata[k] for k in ['title', 'url', 'publishedAt', 'urlToImage']})
+            return res
         else:
             print("No metadata found in the response.")
     else:
@@ -83,5 +83,3 @@ def get_metadata(access_token=None, topic='drug',start_date=None ,end_date=None)
         print(response.json())
     
     return []  # Return an empty list if no metadata are found
-
-
