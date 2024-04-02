@@ -233,7 +233,7 @@ def fetch_news():
             raise ValueError("Incorrect date format. Please use 'yyyy-mm-dd'.")
         
         # Calculate start date to search news from (maximum one month before the date specified)
-        start_date = current_date - timedelta(days=28)
+        start_date = current_date - timedelta(days=20)
 
         # Format dates to ISO 8601 format
         start_date = start_date.strftime("%Y-%m-%dT%H:%M:%SZ")
