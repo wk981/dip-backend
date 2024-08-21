@@ -14,7 +14,7 @@
       - gcloud
       - functions
       - deploy
-      - dip-backend-functions
+      - {function-name here}
       - --region=asia-southeast2	
       - --source=.
       - --trigger-http
